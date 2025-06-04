@@ -1,6 +1,9 @@
 name: Fetch NAV Data
 
 on:
+  push:
+    branches:
+      - master
   schedule:
     - cron: '0 5 * * 4'  # 11 AM BD time = 5 AM UTC on Thursday
   workflow_dispatch:
