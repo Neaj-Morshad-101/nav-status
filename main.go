@@ -5,15 +5,17 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 )
 
 const (
-	url        = "https://idlc.com/aml/nav.php"
-	outputFile = "updated-nav.txt"
-	targetFund = "IDLC Asset Management Shariah Fund"
+	url         = "https://idlc.com/aml/nav.php"
+	outputFile  = "updated-nav.txt"
+	targetFund  = "IDLC Asset Management Shariah Fund"
+	avgBuyPrice = 10.15
 )
 
 func main() {
@@ -36,7 +38,7 @@ func main() {
 	doc.Find("table.table tbody tr").EachWithBreak(func(_ int, row *goquery.Selection) bool {
 		cells := row.Find("td")
 		if cells.Length() == 0 {
-			return true // skip empty rows
+			return true // skip if no <td>
 		}
 
 		fundName := strings.TrimSpace(cells.Eq(0).Text())
@@ -47,7 +49,7 @@ func main() {
 				sb.WriteString("\t")
 			})
 			foundLine = strings.TrimRight(sb.String(), "\t") + "\n"
-			return false // stop after finding the match
+			return false // stop iteration once found
 		}
 		return true
 	})
@@ -56,11 +58,29 @@ func main() {
 		log.Fatalf("❌ Target fund not found: %s", targetFund)
 	}
 
-	// Write the exact line to updated-nav.txt
-	err = os.WriteFile(outputFile, []byte(foundLine), 0644)
+	// Extract the NAV per unit from the found line.
+	// The line has columns: FundName, NAVasOn, NAVPerUnit, InvestorBuyPrice, InvestorSalePrice
+	parts := strings.Split(foundLine, "\t")
+	if len(parts) < 3 {
+		log.Fatalf("❌ Unexpected format in foundLine: %s", foundLine)
+	}
+	navStr := parts[2]
+	navValue, err := strconv.ParseFloat(navStr, 64)
 	if err != nil {
+		log.Fatalf("❌ Unable to parse NAV value '%s': %v", navStr, err)
+	}
+
+	// Calculate profit percentage: ((NAV - avgBuyPrice) / avgBuyPrice) * 100
+	diffPct := (navValue - avgBuyPrice) / avgBuyPrice * 100
+
+	// Format profit line, rounding to one decimal place
+	profitLine := fmt.Sprintf("Profit since buy @%.2f: %.1f%%\n", avgBuyPrice, diffPct)
+
+	// Write both lines to updated-nav.txt
+	output := foundLine + profitLine
+	if err := os.WriteFile(outputFile, []byte(output), 0644); err != nil {
 		log.Fatalf("❌ Failed to write to file: %v", err)
 	}
 
-	fmt.Println("✅ NAV data written to", outputFile)
+	fmt.Println("✅ NAV data and profit line written to", outputFile)
 }
