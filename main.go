@@ -13,50 +13,54 @@ import (
 const (
 	url        = "https://idlc.com/aml/nav.php"
 	outputFile = "updated-nav.txt"
+	targetFund = "IDLC Asset Management Shariah Fund"
 )
 
 func main() {
 	resp, err := http.Get(url)
 	if err != nil {
-		log.Fatalf("Failed to fetch URL: %v", err)
+		log.Fatalf("❌ Failed to fetch URL: %v", err)
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != 200 {
-		log.Fatalf("Status code error: %d %s", resp.StatusCode, resp.Status)
+	if resp.StatusCode != http.StatusOK {
+		log.Fatalf("❌ Unexpected status code: %d %s", resp.StatusCode, resp.Status)
 	}
 
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
-		log.Fatalf("Failed to parse HTML: %v", err)
+		log.Fatalf("❌ Failed to parse HTML: %v", err)
 	}
 
-	table := doc.Find("table.table").First()
-	if table.Length() == 0 {
-		log.Fatal("Could not find NAV table")
-	}
+	var foundLine string
+	doc.Find("table.table tbody tr").EachWithBreak(func(_ int, row *goquery.Selection) bool {
+		cells := row.Find("td")
+		if cells.Length() == 0 {
+			return true // skip empty rows
+		}
 
-	var sb strings.Builder
-
-	// Extract headers
-	table.Find("thead tr th").Each(func(i int, s *goquery.Selection) {
-		sb.WriteString(strings.TrimSpace(s.Text()))
-		sb.WriteString("\t")
-	})
-	sb.WriteString("\n")
-
-	// Extract rows
-	table.Find("tbody tr").Each(func(i int, row *goquery.Selection) {
-		row.Find("td").Each(func(j int, cell *goquery.Selection) {
-			sb.WriteString(strings.TrimSpace(cell.Text()))
-			sb.WriteString("\t")
-		})
-		sb.WriteString("\n")
+		fundName := strings.TrimSpace(cells.Eq(0).Text())
+		if fundName == targetFund {
+			var sb strings.Builder
+			cells.Each(func(i int, cell *goquery.Selection) {
+				sb.WriteString(strings.TrimSpace(cell.Text()))
+				sb.WriteString("\t")
+			})
+			foundLine = strings.TrimRight(sb.String(), "\t") + "\n"
+			return false // stop after finding the match
+		}
+		return true
 	})
 
-	if err := os.WriteFile(outputFile, []byte(sb.String()), 0644); err != nil {
-		log.Fatalf("Failed to write to file: %v", err)
+	if foundLine == "" {
+		log.Fatalf("❌ Target fund not found: %s", targetFund)
 	}
 
-	fmt.Println("✅ NAV data updated in", outputFile)
+	// Write the exact line to updated-nav.txt
+	err = os.WriteFile(outputFile, []byte(foundLine), 0644)
+	if err != nil {
+		log.Fatalf("❌ Failed to write to file: %v", err)
+	}
+
+	fmt.Println("✅ NAV data written to", outputFile)
 }
