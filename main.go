@@ -15,7 +15,7 @@ const (
 	url         = "https://idlc.com/aml/nav.php"
 	outputFile  = "updated-nav.txt"
 	targetFund  = "IDLC Asset Management Shariah Fund"
-	avgBuyPrice = 10.15
+	avgBuyPrice = 10.2633
 )
 
 func main() {
