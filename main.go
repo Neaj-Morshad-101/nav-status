@@ -64,7 +64,7 @@ func main() {
 	if len(parts) < 6 {
 		log.Fatalf("❌ Unexpected format in foundLine: %s", foundLine)
 	}
-	salePriceStr := parts[5]
+	salePriceStr := strings.TrimSpace(parts[5])
 	salePrice, err := strconv.ParseFloat(salePriceStr, 64)
 	if err != nil {
 		log.Fatalf("❌ Unable to parse sale price '%s': %v", salePriceStr, err)
