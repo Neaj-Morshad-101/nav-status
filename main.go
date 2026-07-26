@@ -16,6 +16,7 @@ const (
 	outputFile  = "updated-nav.txt"
 	targetFund  = "IDLC Asset Management Shariah Fund"
 	avgBuyPrice = 10.5703
+	headerLine  = "Fund Name\tNAV Date\tNAV at Cost Value\tNAV at Fair Value\tInvestor's Buy Price\tInvestor's Sale Price\n"
 )
 
 func main() {
@@ -76,8 +77,8 @@ func main() {
 	// Format profit line, rounding to one decimal place
 	profitLine := fmt.Sprintf("Profit since buy @%.2f: %.1f%%\n", avgBuyPrice, diffPct)
 
-	// Write both lines to updated-nav.txt
-	output := foundLine + profitLine
+	// Write header, data, and profit lines to updated-nav.txt
+	output := headerLine + foundLine + profitLine
 	if err := os.WriteFile(outputFile, []byte(output), 0644); err != nil {
 		log.Fatalf("❌ Failed to write to file: %v", err)
 	}
