@@ -15,7 +15,7 @@ const (
 	url         = "https://idlc.com/aml/nav.php"
 	outputFile  = "updated-nav.txt"
 	targetFund  = "IDLC Asset Management Shariah Fund"
-	avgBuyPrice = 10.2633
+	avgBuyPrice = 10.5703
 )
 
 func main() {
@@ -58,20 +58,20 @@ func main() {
 		log.Fatalf("❌ Target fund not found: %s", targetFund)
 	}
 
-	// Extract the NAV per unit from the found line.
-	// The line has columns: FundName, NAVasOn, NAVPerUnit, InvestorBuyPrice, InvestorSalePrice
+	// Extract the Investor's Sale Price from the found line.
+	// The line has columns: FundName, NAVDate, NAVAtCostValue, NAVAtFairValue, InvestorBuyPrice, InvestorSalePrice
 	parts := strings.Split(foundLine, "\t")
-	if len(parts) < 3 {
+	if len(parts) < 6 {
 		log.Fatalf("❌ Unexpected format in foundLine: %s", foundLine)
 	}
-	navStr := parts[2]
-	navValue, err := strconv.ParseFloat(navStr, 64)
+	salePriceStr := parts[5]
+	salePrice, err := strconv.ParseFloat(salePriceStr, 64)
 	if err != nil {
-		log.Fatalf("❌ Unable to parse NAV value '%s': %v", navStr, err)
+		log.Fatalf("❌ Unable to parse sale price '%s': %v", salePriceStr, err)
 	}
 
-	// Calculate profit percentage: ((NAV - avgBuyPrice) / avgBuyPrice) * 100
-	diffPct := (navValue - avgBuyPrice) / avgBuyPrice * 100
+	// Calculate profit percentage: ((SalePrice - avgBuyPrice) / avgBuyPrice) * 100
+	diffPct := (salePrice - avgBuyPrice) / avgBuyPrice * 100
 
 	// Format profit line, rounding to one decimal place
 	profitLine := fmt.Sprintf("Profit since buy @%.2f: %.1f%%\n", avgBuyPrice, diffPct)
