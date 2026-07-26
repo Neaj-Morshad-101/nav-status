@@ -1,2 +1,3 @@
-IDLC Asset Management Shariah Fund	July 22, 2026	11.01	11.23	11.23	11.23
-Profit since buy @10.26: 7.3%
+Fund Name	NAV Date	NAV at Cost Value	NAV at Fair Value	Investor's Buy Price	Investor's Sale Price
+IDLC Asset Management Shariah Fund	July 23, 2026	11.01	11.16	11.16	11.16
+Profit since buy @10.57: 5.6%
